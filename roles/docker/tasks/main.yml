@@ -1,0 +1,52 @@
+---
+- name: Check docker is exist in current host
+  block:
+    - name: where is the docker
+      command: which docker
+      check_mode: false
+      changed_when: false
+      failed_when: false
+      register: docker_installed
+
+- name: debug docker check exist
+  when: not docker_installed.rc != 0 and docker_installed.rc != 127
+  debug:
+    msg: docker is existed
+
+- name: install docker
+  when: docker_installed.rc != 0 and docker_installed.rc != 127
+  block:
+    - name: is docker exist
+      when: vars.mode == "debug"
+      debug:
+        msg: docker is not exist will install
+
+    - name: Add Docker s GPG key for ubuntu from official site
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      tags:
+        - docker
+    
+    - name: Verify gpg key with the fingerprint
+      apt_key:
+        id: 0EBFCD88
+        state: present
+      tags:
+        - docker
+
+    - name: Configure Docker for ubuntu stable repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+        state: present
+        update_cache: yes
+      tags:
+        - docker
+
+    - name: Install docker-ce
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+      tags:
+        - docker

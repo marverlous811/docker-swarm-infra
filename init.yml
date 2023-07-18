@@ -1,0 +1,28 @@
+---
+- name: test connection
+  hosts: all
+  become: true
+  tasks:
+    - name: Hello world
+      shell: echo "hello world"
+
+    - name: Check system information
+      shell: lsb_release -a
+
+    - name: debug
+      debug:
+        msg: check vars {{vars.mode}}
+
+- name: exchange key
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - { role: "commons/ssh-key-exchange", tags: ssh-key-exchange }
+
+- name: runtime setup
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - { role: docker, tags: docker }

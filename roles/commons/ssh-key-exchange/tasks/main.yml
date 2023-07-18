@@ -1,0 +1,44 @@
+- name: Exchange key between each server
+  block:
+    - name: check key is exist
+      stat: 
+        path: ~/.ssh/id_rsa
+      register: ssh_key_existed
+
+    - name: debug ssh key exist
+      when: vars.mode == "debug"
+      block:
+        - name: ssh key is existed
+          when: ssh_key_existed.stat.exists
+          debug:
+            msg: "ssh key is exist"
+        
+        - name: ssh key is not existed
+          when: not ssh_key_existed.stat.exists
+          debug:
+            msg: "ssh key is not exist"
+
+    - name: generate ssh key
+      when: not ssh_key_existed.stat.exists
+      shell: ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -q -N ""
+      tags: ssh-key-exchange
+
+    - name: Fetch the keyfile from one server to another
+      tags: ssh-key-exchange
+      fetch: 
+        src: "~/.ssh/id_rsa.pub"
+        dest: "tmp/{{inventory_hostname}}-id_rsa.pub"
+        flat: yes
+
+    - name: Copy the key add to authorized_keys using Ansible module
+      tags: ssh-key-exchange
+      check_mode: false
+      changed_when: false
+      failed_when: false
+      with_items: 
+        - "{{ groups['all'] }}"
+      when: "{{ item != inventory_hostname }}"
+      authorized_key:
+        user: root
+        state: present
+        key: "{{ lookup('file','tmp/{{item}}-id_rsa.pub')}}"
