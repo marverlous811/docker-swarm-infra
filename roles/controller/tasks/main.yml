@@ -1,0 +1,37 @@
+---
+- name: check portainer is running
+  wait_for:
+    port: 9000
+    delay: 5
+    timeout: 10
+    msg: "Timeout waiting for 9000 to respond"
+  register: portainer_result
+  ignore_errors: true
+
+- name: debug portainer check running
+  when: vars.mode == "debug"
+  block:
+    - name: portainer is running
+      when: not portainer_result.failed
+      debug:
+        msg: portainer is running
+
+    - name: portainer is not running
+      when: portainer_result.failed
+      debug:
+        msg: portainer is not running
+
+- name: init portainer
+  when: portainer_result.failed
+  block:
+    - name: create portainer config file
+      template:
+        src: portainer.yml.j2
+        dest: "~/portainer.yml"
+
+    - name: debug
+      when: vars.mode == "debug"
+      shell: cat ~/portainer.yml
+    
+    - name: init portainer
+      shell: docker stack deploy -c ~/portainer.yml portainer

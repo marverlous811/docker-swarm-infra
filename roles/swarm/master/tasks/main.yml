@@ -1,0 +1,33 @@
+---
+- name: Check if Swarm is Already Initialized
+  shell: docker node ls
+  register: swarm_status
+  ignore_errors: true
+  tags: swarm
+
+- name: Setup swarm
+  when: swarm_status.failed
+  block:
+    - name: Debug swarm manager
+      when: mode == "debug"
+      debug:
+        msg: "{{groups['swarm_manager'][0]}}"
+
+    - name: Init a new swarm with default parameters
+      docker_swarm:
+        state: present
+        advertise_addr: "{{ ansible_host }}"
+      register: result
+      when: inventory_hostname == groups['swarm_manager'][0]
+
+- name: Get join-token for manager nodes
+  set_fact:
+    join_token_manager: "{{ hostvars[groups['swarm_manager'][0]].result.swarm_facts.JoinTokens.Manager }}"
+
+- name: Join other managers
+  docker_swarm:
+    state: join
+    join_token: "{{ join_token_manager }}"
+    advertise_addr: "{{ ansible_host }}"
+    remote_addrs: "{{ groups['swarm_manager'] | map('extract', hostvars, ['ansible_host']) | join(',') }}"
+  when: inventory_hostname != groups['swarm_manager']

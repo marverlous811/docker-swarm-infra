@@ -1,12 +1,10 @@
 ---
 - name: Check docker is exist in current host
-  block:
-    - name: where is the docker
-      command: which docker
-      check_mode: false
-      changed_when: false
-      failed_when: false
-      register: docker_installed
+  command: which docker
+  check_mode: false
+  changed_when: false
+  failed_when: false
+  register: docker_installed
 
 - name: debug docker check exist
   when: not docker_installed.rc != 0 and docker_installed.rc != 127
@@ -50,3 +48,17 @@
         update_cache: yes
       tags:
         - docker
+
+- name: Check docker compose exist
+  command: which docker-compose
+  check_mode: false
+  changed_when: false
+  failed_when: false
+  register: docker_compose_installed
+
+- name: install docker-compose
+  when: docker_compose_installed.rc != 0 and docker_compose_installed.rc != 127
+  get_url:
+    url : "https://github.com/docker/compose/releases/download/{{docker_compose_version}}/docker-compose-Linux-x86_64"
+    dest: /usr/local/bin/docker-compose
+    mode: 'u+x,g+x'

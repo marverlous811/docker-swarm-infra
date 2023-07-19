@@ -1,0 +1,5 @@
+---
+mode: prod
+docker_compose_version: v2.10.2
+portainer_version: 2.18.4
+ansible_python_interpreter: /usr/bin/python3

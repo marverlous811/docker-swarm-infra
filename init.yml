@@ -9,9 +9,9 @@
     - name: Check system information
       shell: lsb_release -a
 
-    - name: debug
+    - name: check vars
       debug:
-        msg: check vars {{vars.mode}}
+        msg: "check vars {{mode}} {{docker_compose_version}} {{portainer_version}}"
 
 - name: exchange key
   hosts: all
@@ -26,3 +26,24 @@
   become: true
   roles:
     - { role: docker, tags: docker }
+
+- name: setup docker swarm master
+  hosts: swarm_manager
+  gather_facts: true
+  become: true
+  roles:
+    - { role: swarm/master, tags: swarm-master }
+
+- name: setup docker swarm node
+  hosts: swarm_worker
+  gather_facts: true
+  become: true
+  roles:
+    - { role: swarm/node, tags: swarm-node }
+
+- name: setup controller
+  hosts: controller
+  gather_facts: true
+  become: true
+  roles:
+    - { role: controller, tags: controller }

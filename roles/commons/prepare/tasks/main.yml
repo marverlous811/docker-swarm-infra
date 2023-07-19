@@ -1,6 +1,5 @@
 ---
 - name: Install necessary packages
-  run_once: true
   apt:
     name: "{{ packages }}"
     state: present
@@ -13,3 +12,11 @@
       - software-properties-common
       - gnupg2
       - net-tools
+      - python3-pip
+
+- name: ensure required pip-packages are installed
+  pip:
+    name: 
+      - docker
+      - PyYAML
+      - docker-compose

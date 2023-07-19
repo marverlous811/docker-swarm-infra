@@ -1,3 +1,5 @@
 .vscode
 hosts.ini
 tmp
+inventory/*
+!inventory/sample

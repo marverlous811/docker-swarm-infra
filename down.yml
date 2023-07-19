@@ -1,0 +1,23 @@
+---
+- name: stop all container
+  hosts: controller
+  tasks:
+    - name: Get a list of all running containers
+      docker_host_info:
+        containers: True
+      register: docker_info
+    - name: Stop all running containers
+      docker_container:
+        name: '{{ item.Names[0] | regex_replace("^/", "") }}'
+        state: stopped
+      loop: "{{ docker_info.containers }}"
+
+- name: managers leave the swarm
+  hosts: swarm_worker
+  roles:
+    - { role: swarm/leave, tags: swarm }
+
+- name: workers leave the swarm
+  hosts: swarm_manager
+  roles:
+    - { role: swarm/leave, tags: swarm }
